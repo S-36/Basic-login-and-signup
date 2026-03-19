@@ -1,25 +1,35 @@
 using DotNetEnv;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
 namespace Login_and_Signup.DB
 {
 
-    public class NoSQL
+    public class MongoSettings 
+    {   
+        public string ConectionString {get; set;} = string.Empty;
+        public string DatabaseName {get; set;} = string.Empty;
+    }
+
+    public interface IMongoContext
     {
-         public IMongoDatabase db; 
-         public MongoClient Client;
+        IMongoCollection<T> GetMongoCollection<T>(string collectionName);
+    }
+    public class MongoDBContext : IMongoContext
+    {
+        private readonly IMongoDatabase _database;
 
-        public NoSQL()
+        // Se utiliza Ioptions que es la forma nativa de .NET Para recibir configuracion tipada desde Program.cs
+        public MongoDBContext(IOptions<MongoSettings> settings)
         {
-            // load the env variables
-            Env.Load();
-            // get the variables
-            var DB_NAME = Environment.GetEnvironmentVariable("DB_NAME") ?? throw new InvalidOperationException("DB_NAME not found");
-            var DB_CONECTION = Environment.GetEnvironmentVariable("DB_CONNECTION") ?? throw new InvalidOperationException("DB_CONECTION not found");
-
-            // load the variables to the MongoClient
-            Client = new MongoClient(DB_CONECTION);
-            db = Client.GetDatabase(DB_NAME);
+            
+            var client = new MongoClient(settings.Value.ConectionString);
+            _database = client.GetDatabase(settings.Value.DatabaseName);
         }
+
+        public IMongoCollection<T> GetMongoCollection<T>(string collectionName)
+        {
+            return _database.GetCollection<T>(collectionName);
+        } 
     }
 }
