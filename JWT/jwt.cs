@@ -1,28 +1,39 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using DotNetEnv;
+using System.Text;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Login_and_Signup.JWT
 {
-    public class JwtService
+    // JwtSettings 
+    public class JwtSettings
     {
-        private readonly string _secretKey;
-        private readonly string _issuer;
-        private readonly string _audience;
+        public string SecretKey {get; set;} = string.Empty;
+        public string Issuer {get; set;} = string.Empty;
+        public string Audience {get; set;} = string.Empty;
+        
+        public int ExpirationHours {get; set;} = 1;
 
-        public JwtService(string secretKey, string issuer, string audience)
+    }
+    // Interface de contrato para Crear el JWT
+    public interface IJwtService
+    {
+        string GenerateToken(string userID, string userEmail);
+    }
+
+    // Constructor del servicio 
+    public class JwtService : IJwtService
+    {
+        private readonly JwtSettings _settings;
+
+        public JwtService(IOptions<JwtSettings> settings)
         {
-            //Load the env variables
-            Env.Load();
-
-            _secretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? throw new InvalidOperationException("JWT_SECRET_KEY not found");
-            _issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? throw new InvalidOperationException("JWT_ISSUER not found");
-            _audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? throw new InvalidOperationException("JWT_AUDIENCE not found");
+            _settings = settings.Value;
         }
 
         public string GenerateToken(string userId, string userEmail)
         {
-            // Define the information that will be included in the token
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, userId),
@@ -30,20 +41,22 @@ namespace Login_and_Signup.JWT
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            // Create the security key and signing credentials
-            var key = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_secretKey));
-            var creds = new Microsoft.IdentityModel.Tokens.SigningCredentials(key, Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256);
+            // Ahora los using están arriba y el código queda limpio
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(_settings.SecretKey)
+            );
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            // Create the token
             var token = new JwtSecurityToken(
-                issuer: _issuer,
-                audience: _audience,
+                issuer: _settings.Issuer,
+                audience: _settings.Audience,
                 claims: claims,
-                expires: DateTime.Now.AddHours(1),
-                signingCredentials: creds);
-                
-            // Return the serialized token
+                expires: DateTime.UtcNow.AddHours(_settings.ExpirationHours),
+                signingCredentials: creds
+            );
+
             return new JwtSecurityTokenHandler().WriteToken(token);
+
         }
     }
 }
