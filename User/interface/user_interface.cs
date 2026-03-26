@@ -2,17 +2,38 @@ using Login_and_Signup.User.model;
 
 namespace Login_and_Signup.User.Interface
 {
-    public interface UserInterface
+    // Se dividen las interfaces en Repository y Service
+    // Repositore para eliminar, guardar o actualizar datos o hacer CRUD, y Service para la logica del negocio 
+    /*
+    ## La regla resumida
+
+    Una interfaz nueva cuando:
+
+    1. Hay una entidad nueva en la DB
+       → IXxxRepository + IXxxService
+
+    2. Hay una responsabilidad que no encaja en las que existen
+       → IEmailService, ITokenService, etc.
+
+    3. Una interfaz existente supera los 5-6 métodos
+       → Señal de que está haciendo demasiado
+    */
+    // CRUD DE USUARIOS
+    public interface IUserRepository
     {
-        // Method to create a new user 
         Task CreateUser(UserModel user);
-        // Method to login an return the JWT token
-        Task<string> LoginUser(string email, string password);
-
-
-
-        // metod to get a user by email
-        Task<UserModel?> GetUserByEmail(string email);
+        Task DeleteUser(string password);
+        Task UpdateUser(UserModel user);
+        Task<UserModel?> GetUserByEmail (string email);
     }
+    // Servicios y Logica para Usuarios
+    public interface IUserService
+    {
+        Task<string> LoginAsync(string email, string password);
+        Task RegisterAsync(string name, string email, string password);
+        Task ValidateEmailAsync(string email);
+
+    }
+
 
 }

@@ -2,6 +2,10 @@ using Login_and_Signup.middleware;
 using DotNetEnv;
 using Login_and_Signup.DB;
 using Login_and_Signup.JWT;
+using Login_and_Signup.User.Interface;
+using Login_and_Signup.User.repository;
+using Login_and_Signup.User.services;
+using Login_and_Signup.Bycript;
 var builder = WebApplication.CreateBuilder(args);
 // Load ENV FILES 
 Env.Load();
@@ -35,6 +39,11 @@ builder.Services.Configure<JwtSettings>(options =>
 // Custom Services 
 builder.Services.AddSingleton<IMongoContext, MongoDBContext>();
 builder.Services.AddSingleton<IJwtService, JwtService>();
+builder.Services.AddSingleton<IBycriptService, BycriptService>();
+// Services and Repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
+
 
 //CORDS
 builder.Services.AddCors(options =>
