@@ -1,15 +1,20 @@
 using System.ComponentModel.DataAnnotations;
-using MongoDB.Bson.Serialization.Attributes;
 
-namespace Login_and_Signup.User.model
+namespace Login_and_Signup.User.dtos
 {
-    public class UserModel
+    public class UserRegisterRequest
     {
-        [BsonId]
-        [BsonRepresentation(MongoDB.Bson.BsonType.ObjectId)]
-        public string _id { get; set; } = string.Empty;
         [Required]
         public string name { get; set; } = string.Empty;
+        [Required]
+        [EmailAddress]
+        public string email { get; set; } = string.Empty;
+        [Required]
+        public string password { get; set; } = string.Empty;
+    }
+
+    public class UserLoginRequest
+    {
         [Required]
         [EmailAddress]
         public string email { get; set; } = string.Empty;
