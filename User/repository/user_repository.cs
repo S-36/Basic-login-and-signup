@@ -16,7 +16,14 @@ namespace Login_and_Signup.User.repository
 
         public async Task CreateUser(UserModel user)
         {
-            await _userCollection.InsertOneAsync(user);
+            try
+            {
+                await _userCollection.InsertOneAsync(user);
+            }
+            catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
+            {
+                throw new InvalidOperationException("A user with this email already exists.", ex);
+            }
         }
 
         public async Task DeleteUser(string password)

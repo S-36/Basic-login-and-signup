@@ -1,3 +1,4 @@
+using Login_and_Signup.Error;
 using Login_and_Signup.User.model;
 
 namespace Login_and_Signup.User.Interface
@@ -29,9 +30,9 @@ namespace Login_and_Signup.User.Interface
     // Servicios y Logica para Usuarios
     public interface IUserService
     {
-        Task<string> LoginAsync(string email, string password);
-        Task RegisterAsync(string name, string email, string password);
-        Task ValidateEmailAsync(string email);
+        Task<Result<string>> LoginAsync(string email, string password);
+        Task<Result> RegisterAsync(string name, string email, string password);
+        Task<Result> ValidateEmailAsync(string email);
 
     }
 
