@@ -6,6 +6,7 @@ using Login_and_Signup.User.Interface;
 using Login_and_Signup.User.repository;
 using Login_and_Signup.User.services;
 using Login_and_Signup.Bycript;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 var builder = WebApplication.CreateBuilder(args);
 // Load ENV FILES 
 Env.Load();
@@ -36,6 +37,29 @@ builder.Services.Configure<JwtSettings>(options =>
     
 });
 
+//JWT Authentification Configuration
+builder.Services.AddAuthentication(options =>
+{   // Set the default authentication scheme to JWT Bearer
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+    {
+        ValidateIssuer = true, // Valida el issuer
+        ValidateAudience = true, // Valida la audiencia 
+        ValidateLifetime = true, // Valida la expiracion
+        ValidateIssuerSigningKey = true, // Valida la firma del token
+
+        // Los valores con los que se valida el token
+        ValidIssuer = Environment.GetEnvironmentVariable("ISSUER") ?? throw new InvalidOperationException("ISSUER_JWT is not set"),
+        ValidAudience = Environment.GetEnvironmentVariable("AUDIENCE") ?? throw new InvalidOperationException("AUDIENCE_JWT is not set"),
+        IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("SECRET_KEY") ?? throw new InvalidOperationException("SECRET_KEY_JWT is not set"))),
+    
+        ClockSkew = TimeSpan.Zero // Elimina el tiempo de tolerancia para la expiracion del token
+    };
+});
+
 // Custom Services 
 builder.Services.AddSingleton<IMongoContext, MongoDBContext>();
 builder.Services.AddSingleton<IJwtService, JwtService>();
@@ -48,12 +72,21 @@ builder.Services.AddScoped<IUserService, UserService>();
 //CORDS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("FrontendPolicy", policy =>
+    // Politica para Desarollo Permite todo
+    options.AddPolicy("DevelomentPolicy", policy =>
     {
         // Add Policy configuration 
         policy.WithOrigins("http://localhost:5050") //--> Your Frontend or localhost
         .AllowAnyHeader()
         .AllowAnyMethod();
+    });
+
+    options.AddPolicy("ProductionPolicy", policy =>
+    {
+        // Add Policy configuration 
+        policy.WithOrigins("https://yourproductionfrontend.com") //--> El frontend de produccion
+        .WithHeaders("Authorization", "Content-Type") //--> Permite Solo los headers de proteccion y contenido en produccion
+        .WithMethods("GET", "POST", "PUT", "DELETE"); //--> Permite los metodos que necesites en produccion
     });
 });
 // Authentification and Authorization
@@ -61,7 +94,8 @@ builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
-// 1 Logs
+
+// Inicio del pipeline de la app
 app.UseMiddleware<ConsoleLogs>();
 
 // Swagger if is Development not Production
@@ -72,7 +106,15 @@ if (app.Environment.IsDevelopment())
 }
 // Cords - Authentication - Authorization - MapControllers
 app.UseHttpsRedirection();
-app.UseCors("FrontendPolicy");
+// Usa los CORDS dependiendo del entorno
+if(app.Environment.IsDevelopment())
+{
+    app.UseCors("DevelomentPolicy");
+}
+else
+{
+    app.UseCors("ProductionPolicy");
+}
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

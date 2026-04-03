@@ -3,6 +3,7 @@ using Login_and_Signup.Error;
 using Login_and_Signup.User.dtos;
 using Login_and_Signup.User.Interface;
 using Login_and_Signup.User.model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Login_and_Signup.User.controller
@@ -19,11 +20,11 @@ namespace Login_and_Signup.User.controller
             _userService = userService;
             _logger = logger;
         }
-
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] UserRegisterRequest request)
         {
-                var result = await _userService.RegisterAsync(request.name, request.email, request.password);
+                var result = await _userService.RegisterAsync(request);
                 if (!result.IsSuccess)
                 {
                     return StatusCode(result.StatusCode, new { error = result.Error });
@@ -33,9 +34,10 @@ namespace Login_and_Signup.User.controller
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] UserLoginRequest request)
         {
-                var result = await _userService.LoginAsync(request.email, request.password);
+                var result = await _userService.LoginAsync(request);
                 if (!result.IsSuccess)
                 {
                     return StatusCode(result.StatusCode, new { error = result.Error });
