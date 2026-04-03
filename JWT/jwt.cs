@@ -19,7 +19,7 @@ namespace Login_and_Signup.JWT
     // Interface de contrato para Crear el JWT
     public interface IJwtService
     {
-        string GenerateToken(string userID, string userEmail);
+        string GenerateToken(string userID, string userEmail, List<string> roles);
     }
 
     // Constructor del servicio 
@@ -32,14 +32,20 @@ namespace Login_and_Signup.JWT
             _settings = settings.Value;
         }
 
-        public string GenerateToken(string userId, string userEmail)
+        public string GenerateToken(string userId, string userEmail, List<string> roles)
         {
-            var claims = new[]
+            // Se cambian los claims a List Para agregar los roles por separado
+            var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, userId),
                 new Claim(JwtRegisteredClaimNames.Email, userEmail),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
+            // Agregar los roles como claims separados 
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
 
             // Ahora los using están arriba y el código queda limpio
             var key = new SymmetricSecurityKey(

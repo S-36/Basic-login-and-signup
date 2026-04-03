@@ -37,7 +37,7 @@ namespace Login_and_Signup.User.services
             {
                 return Result<string>.Failure("Invalid password.", 401);
             }
-            var token = _jwtService.GenerateToken(user._id, request.password);
+            var token = _jwtService.GenerateToken(user._id, request.password, user.roles);
             return Result<string>.Success(token);
         }
 

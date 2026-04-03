@@ -15,5 +15,7 @@ namespace Login_and_Signup.User.model
         public string email { get; set; } = string.Empty;
         [Required]
         public string password { get; set; } = string.Empty;
+        // Lista de roles Para solucionar la entrada a multiples niveles y por defecto el rol de User
+        public List<string> roles { get; set; } = new List<string>() { "User" };
     }
 }
